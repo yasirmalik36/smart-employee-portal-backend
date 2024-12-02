@@ -1,0 +1,13 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/VSWorkspaceState.json
+/.vs/SmartEmployeePortal
+/.vs/slnx.sqlite
+/SmartEmpAPI/.vs/SmartEmpAPI/config/applicationhost.config
+/SmartEmpAPI/.vs/SmartEmpAPI/FileContentIndex
+/SmartEmpAPI/bin/Debug/net8.0
+/SmartEmpAPI/.vs/SmartEmpAPI/v17/.suo
+/SmartEmpAPI/obj
+/SmartEmpAPI/.vs/SmartEmpAPI/v17
