@@ -164,8 +164,8 @@ namespace SmartEmpAPI.Services
             {
                 var parameters = new[]
                 {
-            new SqlParameter("@userID", userID),
-        };
+                         new SqlParameter("@userID", userID),
+                };
 
                 // Execute stored procedure
                 DataSet dataSet = _databaseHelper.ExecuteStoredProcedure("GetEmployeeInfoByUserID", parameters);
