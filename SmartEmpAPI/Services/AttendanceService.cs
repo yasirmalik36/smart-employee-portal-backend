@@ -29,7 +29,7 @@ namespace SmartEmpAPI.Services
 
         public EmployeeAttendanceResponse GetEmployeeAttendance(AttendanceRequest request)
         {
-                    var parameters = new List<SqlParameter>
+            var parameters = new List<SqlParameter>
             {
                 new SqlParameter("@EmployeeID", request.EmployeeId == 0 ? (object)DBNull.Value : request.EmployeeId),
                 new SqlParameter("@DepartmentID", request.DepartmentId == 0 ? (object)DBNull.Value : request.DepartmentId),
@@ -43,7 +43,7 @@ namespace SmartEmpAPI.Services
                 new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
                 new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
             };
-           
+
             var (dataSet, outputParams) = _databaseHelper.ExecuteStoredProcedurewithOutput("PRC_Get_Employee_Attendance", parameters.ToArray());
             var attendanceList = Helper.ConvertDataSetToDictionaryList(dataSet);
 
@@ -104,7 +104,7 @@ namespace SmartEmpAPI.Services
 
 
 
-        public async Task<Attendance> ProcessAttendanceAsync( string createdBy, string imagePath)
+        public async Task<Attendance> ProcessAttendanceAsync(string createdBy, string imagePath)
         {
             // Get the Face Recognition API URL from app settings
 
@@ -154,8 +154,10 @@ namespace SmartEmpAPI.Services
         new SqlParameter("@WorkHours", SqlDbType.Decimal) { Precision = 5, Scale = 2, Direction = ParameterDirection.Output },
 
         // **Adding the missing parameters**
-        new SqlParameter("@EmployeeName", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
-        new SqlParameter("@ProfileImage", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
+        new SqlParameter("@FirstName", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
+        new SqlParameter("@LastName", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
+        new SqlParameter("@ProfileImage", SqlDbType.VarBinary, -1) { Direction = ParameterDirection.Output },
+        new SqlParameter("@Designation", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output }
     };
 
             // Execute stored procedure
@@ -172,20 +174,22 @@ namespace SmartEmpAPI.Services
                 },
 
                 EmployeeID = EmployeeID,
-                CheckInTime = outputParams["@CheckInTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckInTime"].ToString()).TimeOfDay: (TimeSpan?)null,
-                CheckOutTime = outputParams["@CheckOutTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckOutTime"].ToString()).TimeOfDay: (TimeSpan?)null,
+                CheckInTime = outputParams["@CheckInTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckInTime"].ToString()).TimeOfDay : (TimeSpan?)null,
+                CheckOutTime = outputParams["@CheckOutTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckOutTime"].ToString()).TimeOfDay : (TimeSpan?)null,
                 CurrentDate = outputParams["@CurrentDate"]?.ToString(),
                 CurrentDay = outputParams["@CurrentDay"]?.ToString(),
                 Status = outputParams["@Status"]?.ToString(),
                 WorkHours = outputParams["@WorkHours"] != DBNull.Value ? Convert.ToDecimal(outputParams["@WorkHours"]) : (decimal?)null,
                 FaceRecognitionVerified = faceRecognitionVerified,
 
-            
+
 
                 // Assign the missing user details
                 Emp = new EmployeeDetails
                 {
-                    Emp_FullName = outputParams["@EmployeeName"]?.ToString(),
+                    FirstName = outputParams["@FirstName"]?.ToString(),
+                    LastName = outputParams["@LastName"]?.ToString(),
+                    Designation = outputParams["@Designation"]?.ToString(),
                     ProfilePic = outputParams["@ProfileImage"] as byte[]
                 }
             };
@@ -207,6 +211,30 @@ namespace SmartEmpAPI.Services
 
             return JsonSerializer.Deserialize<FaceRecognitionResponse>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
+        public async Task<FaceRecognitionResponse> CheckLivenessAsync(string imagePath)
+        {
+            string apiUrl = $"{_configuration["FaceRecognition:ApiUrl"]}/face-recognition/check-liveness";
 
+            using var form = new MultipartFormDataContent();
+            using var fileStream = File.OpenRead(imagePath);
+            using var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+
+            form.Add(streamContent, "file", Path.GetFileName(imagePath));
+
+            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, form);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<FaceRecognitionResponse>();
+            }
+
+            return new FaceRecognitionResponse
+            {
+                Code = "01",
+                Message = "Failure",
+                Description = "Liveness check API call failed"
+            };
+
+        }
     }
 }
