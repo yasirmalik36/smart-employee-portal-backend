@@ -8,19 +8,33 @@ using SmartEmpAPI.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 var configuration = builder.Configuration;
 
-// Add services to the container.
+// ✅ Register configuration-bound settings
+builder.Services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+
+// ✅ Add services to the container
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
+
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// ✅ Database Helper & Services
 builder.Services.AddSingleton<DatabaseHelper>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
-builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+
+// ✅ Properly inject HttpClient for AttendanceService
+builder.Services.AddHttpClient<IAttendanceService, AttendanceService>();
+
+// ✅ Improve Swagger Security Configuration
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Smart App API", Version = "v1" });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -47,12 +61,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Authentication and Authorization
+// ✅ Add Authentication & Authorization
+var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? throw new ArgumentNullException("JwtSettings");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
-
         options.RequireHttpsMetadata = false;
         options.SaveToken = true;
         options.TokenValidationParameters = new TokenValidationParameters
@@ -67,30 +81,28 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Register CORS
+// ✅ Register CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("SmartEmpApp",
-        builder => builder.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader());
+        policy => policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ✅ Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// ✅ Order of Middleware Matters
 app.UseHttpsRedirection();
+app.UseCors("SmartEmpApp");  // CORS should be before Authentication
 
-// ✅ CORS should be before Authorization
-app.UseCors("SmartEmpApp");
-
-// Enable Authentication and Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 

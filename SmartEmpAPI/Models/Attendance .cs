@@ -1,9 +1,13 @@
-﻿namespace SmartEmpAPI.Models
+﻿using SmartEmpAPI.DTOs;
+using SmartEmpAPI.Models.SmartEmpAPI.Models;
+
+namespace SmartEmpAPI.Models
 {
-    public class Attendance
-    {
+    public class Attendance    {
+        public Response Resp { get; set; }  // Holds API response details
+
         public int AttendanceID { get; set; }          // Unique identifier
-        public int UserID { get; set; }                // Employee reference
+        public int EmployeeID { get; set; }                // Employee reference
         public DateTime AttendanceDate { get; set; }   // Date of attendance
         public TimeSpan? CheckInTime { get; set; }     // Time of check-in (nullable)
         public TimeSpan? CheckOutTime { get; set; }    // Time of check-out (nullable)
@@ -14,6 +18,10 @@
         public DateTime CreatedDate { get; set; }      // Record creation date
         public string ModifiedBy { get; set; }         // User who last modified
         public DateTime? ModifiedDate { get; set; }    // Last modified date (nullable)
+        public string? CurrentDate { get; internal set; }
+        public string? CurrentDay { get; internal set; }
+        // User details
+        public EmployeeDetails Emp { get; set; }  // Navigation property
     }
 
 }

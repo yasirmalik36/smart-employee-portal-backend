@@ -8,6 +8,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Data;
 using SmartEmpAPI.Interfaces;
+using SmartEmpAPI.DTOs;
 
 namespace SmartEmpAPI.Services
 {
@@ -38,8 +39,13 @@ namespace SmartEmpAPI.Services
             {
                 return new LoginResponse
                 {
-                    StatusCode = "01",
-                    StatusMessage = "Invalid email or password, or user is inactive."
+                    Resp = new Response
+                    {
+                        Code = "01",
+                        Message = "Failure",
+                        Description = "Invalid email or password, or user is inactive.",
+                    }
+                   
                 };
             }
 
@@ -50,10 +56,14 @@ namespace SmartEmpAPI.Services
             {
                 return new LoginResponse
                 {
-                    StatusCode = userTable.Rows[0]["StatusCode"].ToString(),
-                    StatusMessage = userTable.Rows[0]["ErrorMessage"].ToString()
+                    Resp = new Response
+                    {
+                        Code = userTable.Rows[0]["StatusCode"].ToString(),
+                        Message = userTable.Rows[0]["ErrorMessage"].ToString()
+                    }
                 };
             }
+
             var rolesTable = dataSet.Tables[1];
 
             var user = new User
@@ -90,13 +100,20 @@ namespace SmartEmpAPI.Services
                 });
             }
 
-             user.Token= GenerateJwtToken(user);
+             var Token= GenerateJwtToken(user);
             return new LoginResponse
             {
-                User = user,
+                // User = user,
+
+                Resp = new Response
+                {
+                    Code = "00",
+                    Message = "Success",
+                    Description = "Login Successfully",
+                },
+                Token = Token,
                 Roles = roles,
-                StatusCode="00",
-                StatusMessage="Success"
+             
             };
         }
         private string GenerateJwtToken(User user)
