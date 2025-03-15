@@ -75,7 +75,7 @@
             public int NumberOfDependents { get; set; }
             public string SocialSecurityNumber { get; set; }
             public bool IsActive { get; set; }
-            public string? Emp_FullName { get; set; }
+            public string? Designation { get; set; }
             public byte[]? ProfilePic { get; set; }
 
         }

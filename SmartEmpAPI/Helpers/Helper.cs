@@ -10,6 +10,21 @@ namespace SmartEmpAPI.Helpers
 
     public static class Helper
     {
+        public static string GetIp(HttpContext httpContext)
+        {
+            if (httpContext == null)
+                return "Unknown";
+
+            string ip = httpContext.Connection.RemoteIpAddress?.ToString();
+
+            // Check if behind a proxy/load balancer
+            if (httpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
+            {
+                ip = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+            }
+
+            return ip ?? "Unknown";
+        }
         public static List<Dictionary<string, object>> ConvertDataSetToDictionaryList(DataSet dataSet)
         {
             var list = new List<Dictionary<string, object>>();

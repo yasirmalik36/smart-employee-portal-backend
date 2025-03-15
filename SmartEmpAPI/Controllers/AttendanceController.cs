@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SmartEmpAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
-using Common;
+using SmartEmpAPI.Helpers;
 namespace SmartEmpAPI.Controllers
 {
     [Authorize]
@@ -26,7 +26,7 @@ namespace SmartEmpAPI.Controllers
             //_userName = AESencryption.DecryptData(_encryptionKey, _httpContext.HttpContext.User.Claims.ToList()[1].Value);
             _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value;
             _userId = _httpContext.HttpContext.User.Claims.ToList()[0].Value;
-            _iP = Helper.GetIp(_httpContext);
+            _iP = Helper.GetIp(_httpContext.HttpContext);
 
         }
 
@@ -82,5 +82,34 @@ namespace SmartEmpAPI.Controllers
             return Ok(result);
         }
 
+        // [AllowAnonymous] // ✅ Makes the API publicly accessible
+        [HttpPost("check-liveness")]
+        public async Task<IActionResult> CheckLiveness( IFormFile ImageFile)
+        {
+            if (ImageFile == null || ImageFile.Length == 0)
+            {
+                return BadRequest(new
+                {
+                    Code = "01",
+                    Message = "Failure",
+                    Reason = "The ImageFile field is required."
+                });
+            }
+
+            // Save the uploaded image temporarily
+            var tempPath = Path.GetTempFileName();
+            using (var stream = new FileStream(tempPath, FileMode.Create))
+            {
+                await ImageFile.CopyToAsync(stream);
+            }
+
+            // Call the liveness detection service
+            var result = await _attendanceService.CheckLivenessAsync(tempPath);
+
+            // Delete the temporary file after processing
+            System.IO.File.Delete(tempPath);
+
+            return Ok(result);
+        }
     }
 }
