@@ -11,6 +11,7 @@
 
         public class EmployeeDetails
         {
+
             public int EmployeeId { get; set; }
             public int UserId { get; set; }
             public string FirstName { get; set; }
@@ -74,6 +75,9 @@
             public int NumberOfDependents { get; set; }
             public string SocialSecurityNumber { get; set; }
             public bool IsActive { get; set; }
+            public string? Emp_FullName { get; set; }
+            public byte[]? ProfilePic { get; set; }
+
         }
     }
 

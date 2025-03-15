@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 using SmartEmpAPI.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
-using Azure.Core;
-
+using Common;
 namespace SmartEmpAPI.Controllers
 {
     [Authorize]
@@ -16,10 +15,19 @@ namespace SmartEmpAPI.Controllers
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
-
-        public AttendanceController(IAttendanceService AttendanceService)
+        private readonly IHttpContextAccessor _httpContext;
+        private string _userName = string.Empty;
+        private string _userId = string.Empty;
+        private string _iP = string.Empty;
+        public AttendanceController(IAttendanceService AttendanceService, IHttpContextAccessor httpContext)
         {
             _attendanceService = AttendanceService;
+            _httpContext = httpContext;
+            //_userName = AESencryption.DecryptData(_encryptionKey, _httpContext.HttpContext.User.Claims.ToList()[1].Value);
+            _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value;
+            _userId = _httpContext.HttpContext.User.Claims.ToList()[0].Value;
+            _iP = Helper.GetIp(_httpContext);
+
         }
 
         [HttpPost("GetAttendance")]
@@ -29,8 +37,15 @@ namespace SmartEmpAPI.Controllers
             {
                 return BadRequest("Invalid request data.");
             }
-            List<Attendance> attendance = _attendanceService.GetAttendanceInfoByUserID(request);
-            return Ok(attendance);
+            try
+            {
+                var response = _attendanceService.GetEmployeeAttendance(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
+            }
         }
         [HttpPost("GetAllLeaves")]
         public IActionResult GetAllLeaves([FromBody] AttendanceRequest request)
@@ -41,6 +56,30 @@ namespace SmartEmpAPI.Controllers
             }
             List <Leaves> leaves = _attendanceService.GetAllLeaves(request);
             return Ok(leaves);
+        }
+
+        [HttpPost("MarkAttendance")]
+        public async Task<IActionResult> MarkAttendance(IFormFile ImageFile)
+        {
+            if (ImageFile == null || ImageFile.Length == 0)
+            {
+                // Return a BadRequest with a proper message if the file is not provided
+                return BadRequest("The ImageFile field is required.");
+            }
+            // Save image temporarily
+            var tempPath = Path.GetTempFileName();
+            using (var stream = new FileStream(tempPath, FileMode.Create))
+            {
+                await ImageFile.CopyToAsync(stream);
+            }
+
+            // Call attendance service
+            var result = await _attendanceService.ProcessAttendanceAsync( _userName, tempPath);
+
+            // Delete temp image file
+            System.IO.File.Delete(tempPath);
+
+            return Ok(result);
         }
 
     }
