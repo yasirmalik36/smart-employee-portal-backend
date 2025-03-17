@@ -117,8 +117,11 @@ namespace SmartEmpAPI.Services
             // Check if the face is matched
             if (faceRecognitionResult.Code == "00" && faceRecognitionResult.Employee_id.HasValue)
             {
-                // Call MarkEmployeeAttendance if face is verified
-                return MarkEmployeeAttendance(faceRecognitionResult.Employee_id.Value, createdBy, true);
+                AttendanceRequest request = new AttendanceRequest();
+                request.EmployeeId = faceRecognitionResult.Employee_id.Value;
+                request.CreatedBy = createdBy;
+                request.FaceRecognitionVerified = true;
+                return MarkEmployeeAttendance(request);
             }
             else
             {
@@ -126,38 +129,42 @@ namespace SmartEmpAPI.Services
                 {
                     Resp = new Response
                     {
-                        Code = "01",
-                        Message = "Face Not Matched",
-                        Description = "Attendance cannot be marked without a valid face match."
+                        Code = faceRecognitionResult.Code,
+                        Message = faceRecognitionResult.Message,
+                        Description = faceRecognitionResult.Description
                     }
                 };
             }
         }
-        public Attendance MarkEmployeeAttendance(int EmployeeID, string createdBy, bool faceRecognitionVerified)
+        public Attendance MarkEmployeeAttendance(AttendanceRequest request)
         {
             // Define input parameters
             var parameters = new[]
-            {
-        new SqlParameter("@EmployeeID", SqlDbType.Int) { Value = EmployeeID },
-        new SqlParameter("@CreatedBy", SqlDbType.NVarChar, 100) { Value = createdBy },
-        new SqlParameter("@FaceRecognitionVerified", SqlDbType.Bit) { Value = faceRecognitionVerified },
+     {
+        new SqlParameter("@EmployeeID", SqlDbType.Int) { Value = request.EmployeeId },
+        new SqlParameter("@CreatedBy", SqlDbType.NVarChar, 100) { Value = request.CreatedBy },
+        new SqlParameter("@FaceRecognitionVerified", SqlDbType.Bit) { Value = request.FaceRecognitionVerified },
+        new SqlParameter("@Biometric", SqlDbType.Bit) { Value = request.Biometric },
+        new SqlParameter("@AttendanceFlag", SqlDbType.VarChar, 10) { Value = (object)request.AttendanceFlag ?? DBNull.Value },
+        new SqlParameter("@DeviceInfo", SqlDbType.NVarChar, 255) { Value = (object)request.DeviceInfo ?? DBNull.Value },
+        new SqlParameter("@Location", SqlDbType.NVarChar, 255) { Value = (object)request.Location ?? DBNull.Value },
 
         // Output parameters
         new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
         new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
         new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output },
-        new SqlParameter("@CheckInTime", SqlDbType.NVarChar, 25) { Direction = ParameterDirection.Output },
-        new SqlParameter("@CheckOutTime", SqlDbType.NVarChar, 25) { Direction = ParameterDirection.Output },
+        new SqlParameter("@CheckInTime", SqlDbType.DateTime) { Direction = ParameterDirection.Output },
+        new SqlParameter("@CheckOutTime", SqlDbType.DateTime) { Direction = ParameterDirection.Output },
         new SqlParameter("@CurrentDate", SqlDbType.NVarChar, 25) { Direction = ParameterDirection.Output },
         new SqlParameter("@CurrentDay", SqlDbType.NVarChar, 15) { Direction = ParameterDirection.Output },
         new SqlParameter("@Status", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
         new SqlParameter("@WorkHours", SqlDbType.Decimal) { Precision = 5, Scale = 2, Direction = ParameterDirection.Output },
 
-        // **Adding the missing parameters**
+        // Additional output parameters
         new SqlParameter("@FirstName", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
         new SqlParameter("@LastName", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
         new SqlParameter("@ProfileImage", SqlDbType.VarBinary, -1) { Direction = ParameterDirection.Output },
-        new SqlParameter("@Designation", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output }
+        new SqlParameter("@Designation", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
     };
 
             // Execute stored procedure
@@ -173,14 +180,14 @@ namespace SmartEmpAPI.Services
                     Description = outputParams["@Description"]?.ToString()
                 },
 
-                EmployeeID = EmployeeID,
+                EmployeeID = request.EmployeeId,
                 CheckInTime = outputParams["@CheckInTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckInTime"].ToString()).TimeOfDay : (TimeSpan?)null,
                 CheckOutTime = outputParams["@CheckOutTime"] != DBNull.Value ? DateTime.Parse(outputParams["@CheckOutTime"].ToString()).TimeOfDay : (TimeSpan?)null,
                 CurrentDate = outputParams["@CurrentDate"]?.ToString(),
                 CurrentDay = outputParams["@CurrentDay"]?.ToString(),
                 Status = outputParams["@Status"]?.ToString(),
                 WorkHours = outputParams["@WorkHours"] != DBNull.Value ? Convert.ToDecimal(outputParams["@WorkHours"]) : (decimal?)null,
-                FaceRecognitionVerified = faceRecognitionVerified,
+                FaceRecognitionVerified = request.FaceRecognitionVerified,
 
 
 
