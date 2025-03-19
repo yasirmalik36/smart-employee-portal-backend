@@ -23,113 +23,96 @@ namespace SmartEmpAPI.Services
             _configuration = configuration;
         }
 
-        public LoginResponse Login(string email, string passwordHash)
+        public LoginResponse Login(LoginRequest request)
         {
+            // Define stored procedure parameters
             var parameters = new[]
             {
-                new SqlParameter("@Identifier", email),
-                new SqlParameter("@PasswordHash", passwordHash)
+                new SqlParameter("@Email", request.Email),
+                new SqlParameter("@Password", request.Password),
+                new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
+                new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
+                new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
             };
+            // Execute stored procedure and get dataset + output parameters
+            var (dataSet, outputParams) = _databaseHelper.ExecuteStoredProcedurewithOutput("PRC_Employee_Login", parameters);
 
-            var dataSet = _databaseHelper.ExecuteStoredProcedure("sp_UserLogin", parameters);
+            // Extract output values
+            string code = outputParams["@Code"]?.ToString() ?? "01";
+            string message = outputParams["@Message"]?.ToString() ?? "Failure";
+            string description = outputParams["@Description"]?.ToString() ?? "Invalid credentials or inactive user.";
 
-
-            // Validate if dataset is null or contains no tables
-            if (dataSet == null || dataSet.Tables.Count == 0 || dataSet.Tables[0].Rows.Count == 0)
+            // Return failure response if login is invalid
+            if (code != "00" || dataSet?.Tables.Count == 0 || dataSet.Tables[0].Rows.Count == 0)
             {
-                return new LoginResponse
-                {
-                    Resp = new Response
-                    {
-                        Code = "01",
-                        Message = "Failure",
-                        Description = "Invalid email or password, or user is inactive.",
-                    }
-                   
-                };
+                return new LoginResponse { Resp = new Response { Code = code, Message = message, Description = description } };
             }
 
+            // Retrieve user information
             var userTable = dataSet.Tables[0];
-
-            // Check if the first row contains an error message
-            if (userTable.Columns.Contains("ErrorMessage") && userTable.Rows.Count > 0)
+            var user = new UserLoginInfo
             {
-                return new LoginResponse
-                {
-                    Resp = new Response
-                    {
-                        Code = userTable.Rows[0]["StatusCode"].ToString(),
-                        Message = userTable.Rows[0]["ErrorMessage"].ToString()
-                    }
-                };
-            }
-
-            var rolesTable = dataSet.Tables[1];
-
-            var user = new User
-            {
-                UserID = (int)userTable.Rows[0]["UserID"],
-                Username = userTable.Rows[0]["Username"].ToString(),
+                EmployeeID = (int)userTable.Rows[0]["EmployeeID"],
                 FirstName = userTable.Rows[0]["FirstName"].ToString(),
                 LastName = userTable.Rows[0]["LastName"].ToString(),
-                Gender = userTable.Rows[0]["Gender"].ToString(),
-                Role = userTable.Rows[0]["Role"].ToString(),
                 Email = userTable.Rows[0]["Email"].ToString(),
-                IsActive = (bool)userTable.Rows[0]["IsActive"],
-                LastLogin = userTable.Rows[0]["LastLogin"] as DateTime?,
-                IPAddress = userTable.Rows[0]["IPAddress"].ToString()
+                Gender = userTable.Rows[0]["Gender"].ToString(),
+                DesignationName = userTable.Rows[0]["DesignationName"].ToString(),
+                ProfileID = (int)userTable.Rows[0]["ProfileID"],
+                ProfilePic = userTable.Rows[0]["ProfilePic"] as byte[]
             };
 
-            var roles = new List<Role>();
-            foreach (DataRow row in rolesTable.Rows)
+            // Retrieve roles and permissions if available
+            List<Profile> roles = new List<Profile>();
+            if (dataSet.Tables.Count > 1)
             {
-                roles.Add(new Role
+                var rolesTable = dataSet.Tables[1];
+
+                foreach (DataRow row in rolesTable.Rows)
                 {
-                    RoleID = (int)row["RoleID"],
-                    RoleName = row["RoleName"].ToString(),
-                    C = (bool)row["C"],
-                    R = (bool)row["R"],
-                    U = (bool)row["U"],
-                    D = (bool)row["D"],
-                    E = (bool)row["E"],
-                    Extra = (bool)row["Extra"],
-                    MappingID = (int)row["MappingID"],
-                    ActivityID = (int)row["ActivityID"],
-                    ActivityName = row["ActivityName"].ToString(),
-                    ActivityURL = row["ActivityURL"].ToString()
-                });
+                    roles.Add(new Profile
+                    {
+                        ProfileID = (int)row["ProfileID"],
+                        ProfileName = row["ProfileName"].ToString(),
+                        C = Convert.ToBoolean(row["C"]),
+                        R = Convert.ToBoolean(row["R"]),
+                        U = Convert.ToBoolean(row["U"]),
+                        D = Convert.ToBoolean(row["D"]),
+                        E = Convert.ToBoolean(row["E"]),
+                        Extra = Convert.ToBoolean(row["Extra"]),
+                        ActivityID = (int)row["ActivityID"],
+                        ActivityName = row["ActivityName"].ToString(),
+                        ActivityURL = row["ActivityURL"].ToString()
+                    });
+                }
             }
 
-             var Token= GenerateJwtToken(user);
+            // Generate JWT token
+            var token = GenerateJwtToken(user);
+
+            // Return success response
             return new LoginResponse
             {
-                // User = user,
-
-                Resp = new Response
-                {
-                    Code = "00",
-                    Message = "Success",
-                    Description = "Login Successfully",
-                },
-                Token = Token,
-                Roles = roles,
-             
+                Resp = new Response { Code = "00", Message = "Success", Description = "Login Successfully" },
+                Token = token,
+                Act = roles
             };
         }
-        private string GenerateJwtToken(User user)
+
+        private string GenerateJwtToken(UserLoginInfo user)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
             {
-             new Claim("UserID", user.UserID.ToString()),     
-             new Claim("Username", user.Username),                           
+             new Claim("UserID", user.EmployeeID.ToString()),     
              new Claim("FirstName", user.FirstName),                           
-             new Claim("LastName", user.LastName),                           
-             new Claim("Gender", user.Gender),                           
+             new Claim("LastName", user.LastName),
+             new Claim("Gender", user.Gender?.ToString() ?? ""),                           
+             new Claim("Designation", user.DesignationName?.ToString() ?? ""),                           
              new Claim("Email", user.Email),                      
-             new Claim("role", string.Join(",", user.Role))             
+             new Claim("ProfileID", string.Join(",", user.ProfileID))             
             };
             var token = new JwtSecurityToken(
                 issuer: _configuration["JwtSettings:Issuer"],
