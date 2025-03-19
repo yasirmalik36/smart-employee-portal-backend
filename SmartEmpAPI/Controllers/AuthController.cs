@@ -25,8 +25,7 @@ namespace SmartEmpAPI.Controllers
                 return BadRequest("Login request cannot be null.");
             }
 
-            // var loginResponse = _authService.Login(loginRequest.Email, PasswordHelper.HashPassword(loginRequest.Password));
-             var loginResponse = _authService.Login(loginRequest.Email, loginRequest.Password);
+             var loginResponse = _authService.Login(loginRequest);
 
             if (loginResponse == null)
             {

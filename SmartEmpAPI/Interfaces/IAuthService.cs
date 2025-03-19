@@ -4,6 +4,6 @@ namespace SmartEmpAPI.Interfaces
 {
     public interface IAuthService
     {
-        LoginResponse Login(string email, string passwordHash);
+        LoginResponse Login(LoginRequest request);
     }
 }

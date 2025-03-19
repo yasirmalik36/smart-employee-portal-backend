@@ -145,7 +145,8 @@ namespace SmartEmpAPI.Services
         new SqlParameter("@CreatedBy", SqlDbType.NVarChar, 100) { Value = request.CreatedBy },
         new SqlParameter("@FaceRecognitionVerified", SqlDbType.Bit) { Value = request.FaceRecognitionVerified },
         new SqlParameter("@Biometric", SqlDbType.Bit) { Value = request.Biometric },
-        new SqlParameter("@AttendanceFlag", SqlDbType.VarChar, 10) { Value = (object)request.AttendanceFlag ?? DBNull.Value },
+        new SqlParameter("@AttendanceFlag", SqlDbType.VarChar, 10) { Value = string.IsNullOrEmpty(request.AttendanceFlag) ? (object)DBNull.Value : request.AttendanceFlag },
+
         new SqlParameter("@DeviceInfo", SqlDbType.NVarChar, 255) { Value = (object)request.DeviceInfo ?? DBNull.Value },
         new SqlParameter("@Location", SqlDbType.NVarChar, 255) { Value = (object)request.Location ?? DBNull.Value },
 
