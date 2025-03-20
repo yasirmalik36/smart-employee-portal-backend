@@ -1,4 +1,6 @@
-﻿namespace SmartEmpAPI.Models
+﻿using SmartEmpAPI.DTOs;
+
+namespace SmartEmpAPI.Models
 {
     namespace SmartEmpAPI.Models
     {
@@ -80,5 +82,10 @@
 
         }
     }
-
+    public class EmployeeDetailsResponse
+    {
+        public Response Resp { get; set; }
+        public List<Dictionary<string, object>> EmployeeData { get; set; }
+    }
+    
 }

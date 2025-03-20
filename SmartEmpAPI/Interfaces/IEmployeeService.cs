@@ -7,5 +7,6 @@ namespace SmartEmpAPI.Interfaces
     {
         List<UserModel> GetUsers();
         EmployeeResponse GetEmployeeInfoByUserID(int userID);
+        EmployeeDetailsResponse GetEmployeeDetails(string employeeIdOrName);
     }
 }

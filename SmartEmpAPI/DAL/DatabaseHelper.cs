@@ -1,6 +1,7 @@
 ﻿
 
 using Microsoft.Data.SqlClient;
+using SmartEmpAPI.DTOs;
 using System.Data;
 
 namespace SmartEmpAPI.DAL
@@ -175,6 +176,67 @@ namespace SmartEmpAPI.DAL
                         }
 
                         return (dataSet, outputParams);
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine($"SQL Exception: {sqlEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                throw;
+            }
+        }
+        public (DataSet, Response) ExecuteSPWithGenericOutput(string procedureName, params SqlParameter[] inputParameters)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new SqlCommand(procedureName, connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        // Add input parameters
+                        if (inputParameters != null)
+                            command.Parameters.AddRange(inputParameters);
+
+                        // Define and add standard output parameters
+                        var outputParams = new Dictionary<string, SqlParameter>
+                {
+                    { "@TotalPages", new SqlParameter("@TotalPages", SqlDbType.Int) { Direction = ParameterDirection.Output } },
+                    { "@Message", new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output } },
+                    { "@Code", new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output } },
+                    { "@Description", new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output } }
+                };
+
+                        foreach (var param in outputParams.Values)
+                        {
+                            command.Parameters.Add(param);
+                        }
+
+                        // Execute and fill DataSet
+                        var dataSet = new DataSet();
+                        using (var dataAdapter = new SqlDataAdapter(command))
+                        {
+                            dataAdapter.Fill(dataSet);
+                        }
+
+                        // Retrieve output values
+                        var response = new Response
+                        {
+                            TotalPages = outputParams["@TotalPages"].Value != DBNull.Value ? outputParams["@TotalPages"].Value.ToString() : "0",
+                            Message = outputParams["@Message"].Value?.ToString(),
+                            Code = outputParams["@Code"].Value?.ToString(),
+                            Description = outputParams["@Description"].Value?.ToString()
+                        };
+
+                        return (dataSet, response);
                     }
                 }
             }

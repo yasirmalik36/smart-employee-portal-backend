@@ -23,5 +23,9 @@ namespace SmartEmpAPI.Models
         // User details
         public EmployeeDetails Emp { get; set; }  // Navigation property
     }
-
+    public class AttendanceResponse
+    {
+        public Response Resp { get; set; }
+        public List<Dictionary<string, object>> EmployeeData { get; set; }
+    }
 }
