@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Net.Http.Headers;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
 using SmartEmpAPI.Helpers;
+using Response = SmartEmpAPI.DTOs.Response;
 
 namespace SmartEmpAPI.Services
 {
@@ -244,5 +245,34 @@ namespace SmartEmpAPI.Services
             };
 
         }
+        public AttendanceResponse CheckAttendanceStatus(AttendanceRequest request)
+        {
+            // Validate required fields if needed
+            if (request.EmployeeId <= 0)
+            {
+                throw new ArgumentException("Invalid Employee ID.");
+            }
+
+            // Prepare SQL parameters
+            var parameters = new List<SqlParameter>
+          {
+            new SqlParameter("@EmployeeID", request.EmployeeId),
+            new SqlParameter("@AttendanceID", (request.AttendanceID.HasValue && request.AttendanceID.Value != 0) ? request.AttendanceID.Value : (object)DBNull.Value),
+            new SqlParameter("@FromDate", request.FromDate.HasValue ? request.FromDate.Value : (object)DBNull.Value),
+            new SqlParameter("@ToDate", request.ToDate.HasValue ? request.ToDate.Value : (object)DBNull.Value),
+           };
+
+            var (dataSet, response) = _databaseHelper.ExecuteSPWithGenericOutput("PRC_Check_Attendance_Status", parameters.ToArray());
+
+            var attendanceList = Helper.ConvertDataSetToDictionaryList(dataSet);
+
+          
+            return new AttendanceResponse
+            {
+                Resp = response,
+                EmployeeData = attendanceList
+            };
+        }
+
     }
 }

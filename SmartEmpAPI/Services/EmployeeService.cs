@@ -7,6 +7,7 @@ using SmartEmpAPI.Interfaces;
 using SmartEmpAPI.Models;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
 using System.Data;
+using SmartEmpAPI.Helpers;
 
 namespace SmartEmpAPI.Services
 {
@@ -266,6 +267,25 @@ namespace SmartEmpAPI.Services
             }
 
             return employeeModel;
+        }
+
+
+        public EmployeeDetailsResponse GetEmployeeDetails(string employeeIdOrName)
+        {
+            var parameters = new List<SqlParameter>
+          {
+              new SqlParameter("@EmployeeID_Name", string.IsNullOrEmpty(employeeIdOrName) ? (object)DBNull.Value : employeeIdOrName)
+          };
+
+            // Call the correct method
+            var (dataSet, response) = _databaseHelper.ExecuteSPWithGenericOutput("PRC_Get_Employee_Details", parameters.ToArray());
+            var employeeList = Helper.ConvertDataSetToDictionaryList(dataSet);
+
+            return new EmployeeDetailsResponse
+            {
+                Resp = response,
+                EmployeeData = employeeList
+            };
         }
 
     }

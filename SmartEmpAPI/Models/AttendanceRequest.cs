@@ -6,6 +6,7 @@ namespace SmartEmpAPI.Models
     {
         public int EmployeeId { get; set; }
         public int? DepartmentId { get; set; }
+        public int? AttendanceID { get; set; }
         public int? DesignationId { get; set; }
         public string? Status { get; set; }
         public int? ShiftId { get; set; }

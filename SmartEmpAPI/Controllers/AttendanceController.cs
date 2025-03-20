@@ -47,6 +47,48 @@ namespace SmartEmpAPI.Controllers
                 return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
             }
         }
+        [HttpPost("CheckAttendanceStatus")]
+        public IActionResult CheckAttendanceStatus([FromBody] AttendanceRequest request)
+        {
+            if (request == null || request.EmployeeId <= 0)
+            {
+                return BadRequest("Invalid request data. Please provide a valid Employee ID.");
+            }
+
+            try
+            {
+                var response = _attendanceService.CheckAttendanceStatus(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
+            }
+        }
+        [HttpPost("ManualAttendance")]
+        public IActionResult MarkManualAttendance([FromBody] AttendanceRequest request)
+        {
+            if (string.IsNullOrEmpty(request.AttendanceFlag) || string.IsNullOrEmpty(request.EmployeeId.ToString()))
+            {
+                return BadRequest("Invalid request data.Please provide Attendance Flag and Employee ID ");
+            }
+            try
+            {
+                request.DeviceInfo = "Employee Portal";
+                request.Location = "Office";
+                request.CreatedBy = _userName;
+                request.FaceRecognitionVerified = false;
+                request.Biometric = false;
+
+                var response = _attendanceService.MarkEmployeeAttendance(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
+            }
+        }
+
         [HttpPost("GetAllLeaves")]
         public IActionResult GetAllLeaves([FromBody] AttendanceRequest request)
         {
