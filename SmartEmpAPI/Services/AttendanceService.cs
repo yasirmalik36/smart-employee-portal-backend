@@ -37,6 +37,8 @@ namespace SmartEmpAPI.Services
                 new SqlParameter("@DesignationID", request.DesignationId == 0 ? (object)DBNull.Value : request.DesignationId),
                 new SqlParameter("@Status", request.Status == "" ? (object)DBNull.Value : request.Status),
                 new SqlParameter("@ShiftID", request.ShiftId == 0 ? (object)DBNull.Value : request.ShiftId),
+                new SqlParameter("@FromDate", request.FromDate.HasValue ? request.FromDate.Value : (object)DBNull.Value),
+                new SqlParameter("@ToDate", request.ToDate.HasValue ? request.ToDate.Value : (object)DBNull.Value),
                 new SqlParameter("@PageNumber", request.PageNumber),
                 new SqlParameter("@PageSize", request.PageSize),
                 new SqlParameter("@TotalPages", SqlDbType.Int) { Direction = ParameterDirection.Output },
