@@ -209,7 +209,7 @@ namespace SmartEmpAPI.DAL
                         // Define and add standard output parameters
                         var outputParams = new Dictionary<string, SqlParameter>
                 {
-                    { "@TotalPages", new SqlParameter("@TotalPages", SqlDbType.Int) { Direction = ParameterDirection.Output } },
+                    { "@TotalRecords", new SqlParameter("@TotalRecords", SqlDbType.Int) { Direction = ParameterDirection.Output } },
                     { "@Message", new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output } },
                     { "@Code", new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output } },
                     { "@Description", new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output } }
@@ -230,7 +230,7 @@ namespace SmartEmpAPI.DAL
                         // Retrieve output values
                         var response = new Response
                         {
-                            TotalPages = outputParams["@TotalPages"].Value != DBNull.Value ? outputParams["@TotalPages"].Value.ToString() : "0",
+                            TotalRecords = outputParams["@TotalRecords"].Value != DBNull.Value ? outputParams["@TotalRecords"].Value.ToString() : "0",
                             Message = outputParams["@Message"].Value?.ToString(),
                             Code = outputParams["@Code"].Value?.ToString(),
                             Description = outputParams["@Description"].Value?.ToString()
