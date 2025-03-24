@@ -41,7 +41,7 @@ namespace SmartEmpAPI.Services
                 new SqlParameter("@ToDate", request.ToDate.HasValue ? request.ToDate.Value : (object)DBNull.Value),
                 new SqlParameter("@PageNumber", request.PageNumber),
                 new SqlParameter("@PageSize", request.PageSize),
-                new SqlParameter("@TotalPages", SqlDbType.Int) { Direction = ParameterDirection.Output },
+                new SqlParameter("@TotalRecords", SqlDbType.Int) { Direction = ParameterDirection.Output },
                 new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
                 new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
                 new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
@@ -57,7 +57,7 @@ namespace SmartEmpAPI.Services
                     Code = outputParams["@Code"]?.ToString(),
                     Message = outputParams["@Message"]?.ToString(),
                     Description = outputParams["@Description"]?.ToString(),
-                    TotalPages = outputParams["@TotalPages"]?.ToString()
+                    TotalRecords = outputParams["@TotalRecords"]?.ToString()
                 },
                 AttendanceData = attendanceList
 
