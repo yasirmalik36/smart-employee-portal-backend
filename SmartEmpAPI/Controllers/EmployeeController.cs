@@ -34,37 +34,25 @@ namespace SmartEmpAPI.Controllers
             _iP = Helper.GetIp(_httpContext.HttpContext);
         }
 
-        [HttpGet("GetUsers")]
-        public IActionResult GetUsers()
-        {
-            try
-            {
-                List<UserModel> users = _employeeService.GetUsers();
-                return Ok(users);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { Message = "An error occurred while fetching users.", Error = ex.Message });
-            }
-        }
 
-        [HttpGet("GetEmployeeInfoByUserID/{userID}")]
-        public IActionResult GetEmployeeInfoByUserID(int userID)
+        [HttpGet("GetEmployeeInfoByID")]
+        public IActionResult GetEmployeeInfoByID([FromQuery] EmployeeRequest request)
         {
             try
             {
-                EmployeeResponse employee = _employeeService.GetEmployeeInfoByUserID(userID);
-                if (employee == null)
+                var response = _employeeService.GetEmployeeInfoByEmployeeID(request);
+                if (response == null || response.EmployeeData == null || !response.EmployeeData.Any())
                 {
-                    return NotFound(new { Message = "Employee not found." });
+                    return NotFound(new { Message = "No employee details found." });
                 }
-                return Ok(employee);
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { Message = "An error occurred while fetching employee info.", Error = ex.Message });
+                return StatusCode(500, new { Message = "An error occurred while processing the request.", Error = ex.Message });
             }
-        }
+        
+    }
 
         [HttpGet("GetEmployeeDetails")]
         public IActionResult GetEmployeeDetails([FromQuery] string employeeIdOrName)
@@ -83,5 +71,31 @@ namespace SmartEmpAPI.Controllers
                 return StatusCode(500, new { Message = "An error occurred while processing the request.", Error = ex.Message });
             }
         }
+
+        [HttpPost("ResetEmployeePassword")]
+        public IActionResult ResetEmployeePassword([FromBody] PasswordResetRequest request)
+        {
+            try
+            {
+                if (request == null || request.EmployeeId <= 0 )
+                {
+                    return BadRequest(new { Message = "Invalid request parameters." });
+                }
+
+                var response = _employeeService.ResetEmployeePassword( request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, new { Message = "Password reset failed. Please try again." });
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while resetting the password.", Error = ex.Message });
+            }
+        }
+
     }
 }

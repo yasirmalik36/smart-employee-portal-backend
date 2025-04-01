@@ -78,63 +78,62 @@ namespace SmartEmpAPI.DAL
                 throw;
             }
         }
-        //public (DataSet, Dictionary<string, object>) ExecuteStoredProcedureWithOutput(string procedureName, params SqlParameter[] parameters)
-        //{
-        //    try
-        //    {
-        //        using (var connection = new SqlConnection(_connectionString))
-        //        {
-        //            connection.Open();
+        public Response ExecuteSPResponse(string procedureName, params SqlParameter[] inputParameters)
+        {
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    connection.Open();
 
-        //            using (var command = new SqlCommand(procedureName, connection))
-        //            {
-        //                command.CommandType = CommandType.StoredProcedure;
+                    using (var command = new SqlCommand(procedureName, connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
 
-        //                // Convert parameters to list to add output parameters
-        //                var paramList = parameters.ToList();
+                        // Add input parameters
+                        if (inputParameters != null)
+                            command.Parameters.AddRange(inputParameters);
 
-        //                // Define output parameters
-        //                var outputParams = new Dictionary<string, object>();
-        //                var outputParameters = new[]
-        //                 {
-        //                      new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
-        //                      new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
-        //                      new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
-        //                 };
+                        // Auto-add standard output parameters if not already included
+                        var outputParams = new Dictionary<string, SqlParameter>
+                {
+                    { "@Message", new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output } },
+                    { "@Code", new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output } },
+                    { "@Description", new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output } }
+                };
 
-        //                // Add output parameters to the list
-        //                paramList.AddRange(outputParameters);
-        //                command.Parameters.AddRange(paramList.ToArray());
+                        foreach (var param in outputParams)
+                        {
+                            if (!command.Parameters.Contains(param.Key))
+                                command.Parameters.Add(param.Value);
+                        }
 
-        //                // Execute and fill DataSet
-        //                var dataSet = new DataSet();
-        //                using (var dataAdapter = new SqlDataAdapter(command))
-        //                {
-        //                    dataAdapter.Fill(dataSet);
-        //                }
+                        // Execute SP
+                        command.ExecuteNonQuery();
 
-        //                // Retrieve output parameters' values
-        //                foreach (var param in outputParameters)
-        //                {
-        //                    outputParams[param.ParameterName] = command.Parameters[param.ParameterName].Value;
-        //                }
+                        // Retrieve output values
+                        var response = new Response
+                        {
+                            Message = command.Parameters["@Message"].Value != DBNull.Value ? command.Parameters["@Message"].Value.ToString() : null,
+                            Code = command.Parameters["@Code"].Value != DBNull.Value ? command.Parameters["@Code"].Value.ToString() : null,
+                            Description = command.Parameters["@Description"].Value != DBNull.Value ? command.Parameters["@Description"].Value.ToString() : null
+                        };
 
-        //                return (dataSet, outputParams);
-        //            }
-        //        }
-        //    }
-        //    catch (SqlException sqlEx)
-        //    {
-        //        Console.WriteLine($"SQL Exception: {sqlEx.Message}");
-        //        throw;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Exception: {ex.Message}");
-        //        throw;
-        //    }
-        //}
-
+                        return response;
+                    }
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                Console.WriteLine($"SQL Exception: {sqlEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception: {ex.Message}");
+                throw;
+            }
+        }
 
         public (DataSet, Dictionary<string, object>) ExecuteStoredProcedurewithOutput(string procedureName, params SqlParameter[] parameters)
         {
