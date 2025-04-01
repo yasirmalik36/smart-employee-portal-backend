@@ -5,8 +5,8 @@ namespace SmartEmpAPI.Interfaces
 {
     public interface IEmployeeService
     {
-        List<UserModel> GetUsers();
-        EmployeeResponse GetEmployeeInfoByUserID(int userID);
-        EmployeeDetailsResponse GetEmployeeDetails(string employeeIdOrName);
+        EmployeeResponse GetEmployeeInfoByEmployeeID(EmployeeRequest request);
+        EmployeeResponse GetEmployeeDetails(string employeeIdOrName);
+        PasswordResetResponse ResetEmployeePassword(PasswordResetRequest request);
     }
 }

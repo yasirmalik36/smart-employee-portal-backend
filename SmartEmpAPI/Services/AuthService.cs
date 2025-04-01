@@ -59,11 +59,15 @@ namespace SmartEmpAPI.Services
                 Gender = userTable.Rows[0]["Gender"].ToString(),
                 DesignationName = userTable.Rows[0]["DesignationName"].ToString(),
                 ProfileID = (int)userTable.Rows[0]["ProfileID"],
-                ProfilePic = userTable.Rows[0]["ProfilePic"] as byte[]
+                ProfilePic = userTable.Rows[0]["ProfilePic"] as byte[],
+                PasswordResetRequired = userTable.Rows[0]["PasswordResetRequired"] != DBNull.Value
+                           ? (bool)userTable.Rows[0]["PasswordResetRequired"]
+                           : false 
+                                   
             };
 
             // Retrieve roles and permissions if available
-            List<Profile> roles = new List<Profile>();
+            List <Profile> roles = new List<Profile>();
             if (dataSet.Tables.Count > 1)
             {
                 var rolesTable = dataSet.Tables[1];
@@ -93,9 +97,11 @@ namespace SmartEmpAPI.Services
             // Return success response
             return new LoginResponse
             {
-                Resp = new Response { Code = "00", Message = "Success", Description = "Login Successfully" },
+                Resp = new Response { Code = code, Message = message, Description = description },
                 Token = token,
-                Act = roles
+                Act = roles,
+                IsPasswordResetRequired = user.PasswordResetRequired
+
             };
         }
 
