@@ -1,4 +1,5 @@
-﻿using SmartEmpAPI.Models;
+﻿using SmartEmpAPI.DTOs;
+using SmartEmpAPI.Models;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
 
 namespace SmartEmpAPI.Interfaces
@@ -8,5 +9,7 @@ namespace SmartEmpAPI.Interfaces
         EmployeeResponse GetEmployeeInfoByEmployeeID(EmployeeRequest request);
         EmployeeResponse GetEmployeeDetails(string employeeIdOrName);
         PasswordResetResponse ResetEmployeePassword(PasswordResetRequest request);
+        Response AddUpdateEmployee(EmployeeAddUpdateRequest request);
+
     }
 }
