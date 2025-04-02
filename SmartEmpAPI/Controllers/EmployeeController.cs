@@ -9,6 +9,7 @@ using SmartEmpAPI.Helpers;
 using Microsoft.AspNetCore.Http;
 using System.Linq;
 using SmartEmpAPI.Models.SmartEmpAPI.Models;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SmartEmpAPI.Controllers
 {
@@ -29,7 +30,7 @@ namespace SmartEmpAPI.Controllers
             _httpContext = httpContext;
 
             // Extract user details from claims
-            _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value;
+            _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value +" " + _httpContext.HttpContext.User.Claims.ToList()[2].Value;
             _userId = _httpContext.HttpContext.User.Claims.ToList()[0].Value;
             _iP = Helper.GetIp(_httpContext.HttpContext);
         }
@@ -96,6 +97,35 @@ namespace SmartEmpAPI.Controllers
                 return StatusCode(500, new { Message = "An error occurred while resetting the password.", Error = ex.Message });
             }
         }
+        [HttpPost("AddUpdateEmployee")]
+        public IActionResult AddUpdateEmployee([FromBody] EmployeeAddUpdateRequest request)
+        {
+            try
+            {
+                if (request == null)
+                {
+                    return BadRequest(new { Message = "Invalid request parameters." });
+                }
 
+                request.CreatedBy = _userName;
+                if(request.EmployeeID != 0)
+                {
+                    request.ModifiedBy = _userName;
+                }
+                          
+               var response = _employeeService.AddUpdateEmployee(request);
+
+                if (response == null)
+                {
+                    return StatusCode(500, new { Message = "Failed to add or update employee. Please try again." });
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while processing the request.", Error = ex.Message });
+            }
+        }
     }
 }

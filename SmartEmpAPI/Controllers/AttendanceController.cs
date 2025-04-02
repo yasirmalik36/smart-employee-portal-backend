@@ -24,7 +24,7 @@ namespace SmartEmpAPI.Controllers
             _attendanceService = AttendanceService;
             _httpContext = httpContext;
             //_userName = AESencryption.DecryptData(_encryptionKey, _httpContext.HttpContext.User.Claims.ToList()[1].Value);
-            _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value;
+            _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value + " " + _httpContext.HttpContext.User.Claims.ToList()[2].Value;
             _userId = _httpContext.HttpContext.User.Claims.ToList()[0].Value;
             _iP = Helper.GetIp(_httpContext.HttpContext);
 
