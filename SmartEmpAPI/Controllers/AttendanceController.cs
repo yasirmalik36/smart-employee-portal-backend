@@ -15,13 +15,15 @@ namespace SmartEmpAPI.Controllers
     public class AttendanceController : ControllerBase
     {
         private readonly IAttendanceService _attendanceService;
+        private readonly IFaceRecognition _faceRecongnition;
         private readonly IHttpContextAccessor _httpContext;
         private string _userName = string.Empty;
         private string _userId = string.Empty;
         private string _iP = string.Empty;
-        public AttendanceController(IAttendanceService AttendanceService, IHttpContextAccessor httpContext)
+        public AttendanceController(IAttendanceService AttendanceService, IFaceRecognition faceRecognition, IHttpContextAccessor httpContext)
         {
             _attendanceService = AttendanceService;
+            _faceRecongnition = faceRecognition;
             _httpContext = httpContext;
             //_userName = AESencryption.DecryptData(_encryptionKey, _httpContext.HttpContext.User.Claims.ToList()[1].Value);
             _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value + " " + _httpContext.HttpContext.User.Claims.ToList()[2].Value;
@@ -105,53 +107,21 @@ namespace SmartEmpAPI.Controllers
         {
             if (ImageFile == null || ImageFile.Length == 0)
             {
-                // Return a BadRequest with a proper message if the file is not provided
                 return BadRequest("The ImageFile field is required.");
             }
-            // Save image temporarily
             var tempPath = Path.GetTempFileName();
             using (var stream = new FileStream(tempPath, FileMode.Create))
             {
                 await ImageFile.CopyToAsync(stream);
             }
 
-            // Call attendance service
-            var result = await _attendanceService.ProcessAttendanceAsync( _userName, tempPath);
+            var result = await _faceRecongnition.ProcessAttendanceAsync( _userName, tempPath);
 
-            // Delete temp image file
             System.IO.File.Delete(tempPath);
 
             return Ok(result);
         }
 
-        // [AllowAnonymous] // ✅ Makes the API publicly accessible
-        [HttpPost("check-liveness")]
-        public async Task<IActionResult> CheckLiveness( IFormFile ImageFile)
-        {
-            if (ImageFile == null || ImageFile.Length == 0)
-            {
-                return BadRequest(new
-                {
-                    Code = "01",
-                    Message = "Failure",
-                    Reason = "The ImageFile field is required."
-                });
-            }
 
-            // Save the uploaded image temporarily
-            var tempPath = Path.GetTempFileName();
-            using (var stream = new FileStream(tempPath, FileMode.Create))
-            {
-                await ImageFile.CopyToAsync(stream);
-            }
-
-            // Call the liveness detection service
-            var result = await _attendanceService.CheckLivenessAsync(tempPath);
-
-            // Delete the temporary file after processing
-            System.IO.File.Delete(tempPath);
-
-            return Ok(result);
         }
-    }
 }

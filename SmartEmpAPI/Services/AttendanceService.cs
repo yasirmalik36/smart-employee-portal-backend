@@ -107,38 +107,7 @@ namespace SmartEmpAPI.Services
 
 
 
-        public async Task<Attendance> ProcessAttendanceAsync(string createdBy, string imagePath)
-        {
-            // Get the Face Recognition API URL from app settings
 
-            string faceRecognitionUrl = $"{_configuration["FaceRecognition:ApiUrl"]}/face-recognition/verify-face";
-            FaceRecognitionResponse faceRecognitionResult = new FaceRecognitionResponse();
-
-            // Call the VerifyFaceAsync method to get the result
-            faceRecognitionResult = await VerifyFaceAsync(faceRecognitionUrl, imagePath);
-
-            // Check if the face is matched
-            if (faceRecognitionResult.Code == "00" && faceRecognitionResult.Employee_id.HasValue)
-            {
-                AttendanceRequest request = new AttendanceRequest();
-                request.EmployeeId = faceRecognitionResult.Employee_id.Value;
-                request.CreatedBy = createdBy;
-                request.FaceRecognitionVerified = true;
-                return MarkEmployeeAttendance(request);
-            }
-            else
-            {
-                return new Attendance
-                {
-                    Resp = new Response
-                    {
-                        Code = faceRecognitionResult.Code,
-                        Message = faceRecognitionResult.Message,
-                        Description = faceRecognitionResult.Description
-                    }
-                };
-            }
-        }
         public Attendance MarkEmployeeAttendance(AttendanceRequest request)
         {
             // Define input parameters
@@ -208,45 +177,6 @@ namespace SmartEmpAPI.Services
             return attendance;
         }
 
-        private async Task<FaceRecognitionResponse> VerifyFaceAsync(string apiUrl, string imagePath)
-        {
-            using var formData = new MultipartFormDataContent();
-            using var imageStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read);
-            using var imageContent = new StreamContent(imageStream);
-
-            imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-            formData.Add(imageContent, "image_file", Path.GetFileName(imagePath));
-
-            var response = await _httpClient.PostAsync(apiUrl, formData);
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-
-            return JsonSerializer.Deserialize<FaceRecognitionResponse>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        }
-        public async Task<FaceRecognitionResponse> CheckLivenessAsync(string imagePath)
-        {
-            string apiUrl = $"{_configuration["FaceRecognition:ApiUrl"]}/face-recognition/check-liveness";
-
-            using var form = new MultipartFormDataContent();
-            using var fileStream = File.OpenRead(imagePath);
-            using var streamContent = new StreamContent(fileStream);
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
-
-            form.Add(streamContent, "file", Path.GetFileName(imagePath));
-
-            HttpResponseMessage response = await _httpClient.PostAsync(apiUrl, form);
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<FaceRecognitionResponse>();
-            }
-
-            return new FaceRecognitionResponse
-            {
-                Code = "01",
-                Message = "Failure",
-                Description = "Liveness check API call failed"
-            };
-
-        }
         public AttendanceResponse CheckAttendanceStatus(AttendanceRequest request)
         {
             // Validate required fields if needed

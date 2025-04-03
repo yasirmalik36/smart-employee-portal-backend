@@ -100,7 +100,8 @@ namespace SmartEmpAPI.Services
                 Resp = new Response { Code = code, Message = message, Description = description },
                 Token = token,
                 Act = roles,
-                IsPasswordResetRequired = user.PasswordResetRequired
+                IsPasswordResetRequired = user.PasswordResetRequired,
+                ProfilePic = ConvertProfilePicToBase64(user.ProfilePic)
 
             };
         }
@@ -131,6 +132,20 @@ namespace SmartEmpAPI.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
+        private static string ConvertProfilePicToBase64(object profilePic)
+        {
+            if (profilePic is byte[] byteArray)
+            {
+                return Convert.ToBase64String(byteArray);
+            }
+            else if (profilePic != null)
+            {
+                return profilePic.ToString(); // If it's already a string, return it.
+            }
+            else
+            {
+                return ""; // Return an empty string if profilePic is null.
+            }
+        }
     }
 }

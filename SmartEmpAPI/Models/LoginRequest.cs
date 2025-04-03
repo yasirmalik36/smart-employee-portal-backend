@@ -76,6 +76,7 @@ namespace SmartEmpAPI.Models
         public bool IsPasswordResetRequired { get; set; } // Force user to reset password
         public bool IsAccountLocked { get; set; } // If the account is locked
         public bool IsFirstLogin { get; set; } // If this is the user's first login
+        public string? ProfilePic { get; set; } // If this is the user's first login
 
     }
     public class LoginRequest

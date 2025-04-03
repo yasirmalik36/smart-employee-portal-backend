@@ -15,7 +15,6 @@ namespace SmartEmpAPI.Services
     public class EmployeeService : IEmployeeService
     {
         private readonly DatabaseHelper _databaseHelper;
-
         public EmployeeService(DatabaseHelper databaseHelper)
         {
             _databaseHelper = databaseHelper;
@@ -140,18 +139,17 @@ namespace SmartEmpAPI.Services
         new SqlParameter("@Health_condition", request.HealthCondition),
         new SqlParameter("@Disability_status", request.DisabilityStatus),
         new SqlParameter("@Medications", request.Medications),
-        new SqlParameter("@Number_of_dependents", request.NumberOfDependents),
+        new SqlParameter("@Number_of_dependents", request.NumberOfDependents?.ToString() ?? "0"),
         new SqlParameter("@ProfilePic", profilePicBytes ?? (object)DBNull.Value),
         new SqlParameter("@IsActive", request.IsActive),
         new SqlParameter("@CreatedBy", request.CreatedBy),
         new SqlParameter("@ModifiedBy", request.ModifiedBy ?? (object)DBNull.Value),
-        new SqlParameter("@Password", request.Password)
+        new SqlParameter("@Password", "Abc@123")
     };
 
 
 
             var response = _databaseHelper.ExecuteSPResponse("PRC_Add_Update_Employee", parameters.ToArray());
-
             return response;
         }
 
