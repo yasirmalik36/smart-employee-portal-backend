@@ -8,8 +8,6 @@ namespace SmartEmpAPI.Interfaces
     {
         EmployeeAttendanceResponse GetEmployeeAttendance(AttendanceRequest request);
         List<Leaves> GetAllLeaves(AttendanceRequest request);
-        Task<Attendance> ProcessAttendanceAsync( string createdBy, string imagePath);
-        Task<FaceRecognitionResponse> CheckLivenessAsync(string imagePath);
         Attendance MarkEmployeeAttendance(AttendanceRequest request);
         AttendanceResponse CheckAttendanceStatus(AttendanceRequest request);
 

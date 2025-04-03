@@ -45,12 +45,12 @@
         public string? HealthCondition { get; set; }
         public string? DisabilityStatus { get; set; }
         public string? Medications { get; set; }
-        public int NumberOfDependents { get; set; }
+        public string? NumberOfDependents { get; set; }
         public string ProfilePic { get; set; }  // Base64 string
         public bool IsActive { get; set; }
         public string? CreatedBy { get; set; }
         public string? ModifiedBy { get; set; } // Nullable for update scenarios
-        public string Password { get; set; }
+        public string? Password { get; set; }
     }
 
 }
