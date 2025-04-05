@@ -7,21 +7,26 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.IO;
 using SmartEmpAPI.Interfaces;
+using SmartEmpAPI.DAL;
+using SmartEmpAPI.Helpers;
+using Microsoft.Data.SqlClient;
 
 namespace SmartEmpAPI.Services
 {
-   
     public class FaceRecognitionService : IFaceRecognition
     {
         private readonly HttpClient _httpClient;
         private readonly IConfiguration _configuration;
         private readonly IAttendanceService _attendanceService;
+        private readonly DatabaseHelper _databaseHelper;
 
-        public FaceRecognitionService(HttpClient httpClient, IConfiguration configuration, IAttendanceService AttendanceService)
+        public FaceRecognitionService(HttpClient httpClient, IConfiguration configuration, IAttendanceService AttendanceService, DatabaseHelper databaseHelper)
         {
             _httpClient = httpClient;
             _configuration = configuration;
             _attendanceService = AttendanceService;
+            _databaseHelper = databaseHelper;
+
         }
 
         public async Task<FaceRecognitionResponse> SaveFaceAsync(string employeeId, string createdBy, string imagePath)
@@ -142,6 +147,23 @@ namespace SmartEmpAPI.Services
                 Console.WriteLine($"An error occurred: {ex.Message}");
                 return null;
             }
+        }
+        public EmployeeFaceStatusResponse GetEmployeeFaceStatus(string employeeIdOrName)
+        {
+            var parameters = new List<SqlParameter>
+             {
+                new SqlParameter("@EmployeeID_Name", string.IsNullOrEmpty(employeeIdOrName) || employeeIdOrName == "0" ? (object)DBNull.Value : employeeIdOrName)
+             };
+            
+            // Call the correct stored procedure
+            var (dataSet, response) = _databaseHelper.ExecuteSPWithGenericOutput("PRC_Get_EmployeeFaces_Status", parameters.ToArray());
+            var employeeFaceList = Helper.ConvertDataSetToDictionaryList(dataSet);
+
+            return new EmployeeFaceStatusResponse
+            {
+                Resp = response,
+                EmployeeFaces = employeeFaceList
+            };
         }
 
     }
