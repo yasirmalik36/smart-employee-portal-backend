@@ -110,5 +110,23 @@ namespace SmartEmpAPI.Controllers
                 return StatusCode(500, new { Message = "An error occurred during liveness check.", Error = ex.Message });
             }
         }
+        [HttpGet("GetEmployeeFaceDetails")]
+        public IActionResult GetEmployeeFaceDetails([FromQuery] string employeeIdOrName)
+        {
+            try
+            {
+                var response = _faceRecognition.GetEmployeeFaceStatus(employeeIdOrName);
+                if (response == null || response.EmployeeFaces == null || !response.EmployeeFaces.Any())
+                {
+                    return NotFound(new { Message = "No employee face status found." });
+                }
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred while processing the request.", Error = ex.Message });
+            }
+        }
+
     }
 }
