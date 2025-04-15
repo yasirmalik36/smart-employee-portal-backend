@@ -127,6 +127,29 @@ namespace SmartEmpAPI.Controllers
                 return StatusCode(500, new { Message = "An error occurred while processing the request.", Error = ex.Message });
             }
         }
+        [HttpDelete("DeleteFace/{employeeId}")]
+        public async Task<IActionResult> DeleteFace(int employeeId)
+        {
+            try
+            {
+                var result = await _faceRecognition.DeleteFaceAsync(employeeId);
+                if (result == null || result.Code != "00")
+                {
+                    return BadRequest(result);
+                }
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new Response
+                {
+                    Code = "01",
+                    Message = "Failure",
+                    Description = $"An error occurred: {ex.Message}"
+                });
+            }
+        }
+
 
     }
 }

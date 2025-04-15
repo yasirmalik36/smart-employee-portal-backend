@@ -165,6 +165,37 @@ namespace SmartEmpAPI.Services
                 EmployeeFaces = employeeFaceList
             };
         }
+        public async Task<FaceRecognitionResponse> DeleteFaceAsync(int employeeId)
+        {
+            string apiUrl = $"{_configuration["FaceRecognition:ApiUrl"]}/face-recognition/delete-face/{employeeId}";
+
+            try
+            {
+                var response = await _httpClient.DeleteAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<FaceRecognitionResponse>();
+                }
+
+                return new FaceRecognitionResponse
+                {
+                    Code = "01",
+                    Message = "Failure",
+                    Description = "Delete API call failed"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new FaceRecognitionResponse
+                {
+                    Code = "01",
+                    Message = "Failure",
+                    Description = $"Exception: {ex.Message}"
+                };
+            }
+        }
+
 
     }
 }

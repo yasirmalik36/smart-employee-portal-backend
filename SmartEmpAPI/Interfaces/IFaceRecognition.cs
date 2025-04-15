@@ -9,5 +9,7 @@ namespace SmartEmpAPI.Interfaces
         Task<Attendance> ProcessAttendanceAsync(string createdBy, string imagePath);
         Task<FaceRecognitionResponse> CheckLivenessAsync(string imagePath);
         EmployeeFaceStatusResponse GetEmployeeFaceStatus(string employeeIdOrName);
+        Task<FaceRecognitionResponse> DeleteFaceAsync(int employeeId);
+
     }
 }

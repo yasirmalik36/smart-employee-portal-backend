@@ -61,10 +61,7 @@ namespace SmartEmpAPI.Controllers
             try
             {
                 var response = _employeeService.GetEmployeeDetails(employeeIdOrName);
-                if (response == null || response.EmployeeData == null || !response.EmployeeData.Any())
-                {
-                    return NotFound(new { Message = "No employee details found." });
-                }
+              
                 return Ok(response);
             }
             catch (Exception ex)
