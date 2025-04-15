@@ -27,6 +27,7 @@ builder.Services.AddSingleton<DatabaseHelper>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IFaceRecognition, FaceRecognitionService>();
+builder.Services.AddScoped<ICommonService, CommonService>();
 
 // ✅ Properly inject HttpClient for AttendanceService
 builder.Services.AddHttpClient<IAttendanceService, AttendanceService>();
