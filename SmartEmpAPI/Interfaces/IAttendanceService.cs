@@ -7,7 +7,7 @@ namespace SmartEmpAPI.Interfaces
     public interface IAttendanceService
     {
         EmployeeAttendanceResponse GetEmployeeAttendance(AttendanceRequest request);
-        List<Leaves> GetAllLeaves(AttendanceRequest request);
+        EmployeeLeavesResponse GetEmployeeLeaves(AttendanceRequest request);
         Attendance MarkEmployeeAttendance(AttendanceRequest request);
         AttendanceResponse CheckAttendanceStatus(AttendanceRequest request);
 
