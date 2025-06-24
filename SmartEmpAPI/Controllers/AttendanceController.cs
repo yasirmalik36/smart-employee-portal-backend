@@ -24,6 +24,7 @@ namespace SmartEmpAPI.Controllers
         {
             _attendanceService = AttendanceService;
             _faceRecongnition = faceRecognition;
+
             _httpContext = httpContext;
             //_userName = AESencryption.DecryptData(_encryptionKey, _httpContext.HttpContext.User.Claims.ToList()[1].Value);
             _userName = _httpContext.HttpContext.User.Claims.ToList()[1].Value + " " + _httpContext.HttpContext.User.Claims.ToList()[2].Value;
@@ -42,6 +43,23 @@ namespace SmartEmpAPI.Controllers
             try
             {
                 var response = _attendanceService.GetEmployeeAttendance(request);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
+            }
+        }
+        [HttpPost("GetLeaves")]
+        public IActionResult GetLeaves([FromBody] AttendanceRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Invalid request data.");
+            }
+            try
+            {
+                var response = _attendanceService.GetEmployeeLeaves(request);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -89,17 +107,6 @@ namespace SmartEmpAPI.Controllers
             {
                 return StatusCode(500, new { Message = "An error occurred", Error = ex.Message });
             }
-        }
-
-        [HttpPost("GetAllLeaves")]
-        public IActionResult GetAllLeaves([FromBody] AttendanceRequest request)
-        {
-            if (request == null)
-            {
-                return BadRequest("Invalid request data.");
-            }
-            List <Leaves> leaves = _attendanceService.GetAllLeaves(request);
-            return Ok(leaves);
         }
 
         [HttpPost("MarkAttendance")]
