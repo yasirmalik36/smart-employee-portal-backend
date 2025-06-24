@@ -64,47 +64,41 @@ namespace SmartEmpAPI.Services
             };
         }
 
-        public List<Leaves> GetAllLeaves(AttendanceRequest request)
+        public EmployeeLeavesResponse GetEmployeeLeaves(AttendanceRequest request)
         {
-            List<Leaves> leaveList = new List<Leaves>();
-            var parameters = new[]
-             {
-                 new SqlParameter("@UserID", request.EmployeeId),
-                 new SqlParameter("@DateFrom", request.FromDate),
-                 new SqlParameter("@DateTo", request.ToDate)
-             };
-            // Execute stored procedure with parameters
-            DataSet dataSet = _databaseHelper.ExecuteStoredProcedure("GetAllLeavesByUserID", parameters);
-
-            // Ensure dataset contains tables
-            if (dataSet.Tables.Count > 0)
+            var parameters = new List<SqlParameter>
             {
-                DataTable dataTable = dataSet.Tables[0]; // Extract the first DataTable
+                new SqlParameter("@EmployeeID", request.EmployeeId == 0 ? (object)DBNull.Value : request.EmployeeId),
+                new SqlParameter("@DepartmentID", request.DepartmentId == 0 ? (object)DBNull.Value : request.DepartmentId),
+                new SqlParameter("@DesignationID", request.DesignationId == 0 ? (object)DBNull.Value : request.DesignationId),
+                new SqlParameter("@Status", request.Status == "" ? (object)DBNull.Value : request.Status),
+              //  new SqlParameter("@ShiftID", request.ShiftId == 0 ? (object)DBNull.Value : request.ShiftId),
+                new SqlParameter("@FromDate", request.FromDate.HasValue ? request.FromDate.Value : (object)DBNull.Value),
+                new SqlParameter("@ToDate", request.ToDate.HasValue ? request.ToDate.Value : (object)DBNull.Value),
+                new SqlParameter("@PageNumber", request.PageNumber),
+                new SqlParameter("@PageSize", request.PageSize),
+                new SqlParameter("@TotalRecords", SqlDbType.Int) { Direction = ParameterDirection.Output },
+                new SqlParameter("@Message", SqlDbType.NVarChar, 100) { Direction = ParameterDirection.Output },
+                new SqlParameter("@Code", SqlDbType.NVarChar, 2) { Direction = ParameterDirection.Output },
+                new SqlParameter("@Description", SqlDbType.NVarChar, 255) { Direction = ParameterDirection.Output }
+            };
 
-                foreach (DataRow row in dataTable.Rows)
+            var (dataSet, outputParams) = _databaseHelper.ExecuteStoredProcedurewithOutput("PRC_Get_Employee_Leaves", parameters.ToArray());
+            var attendanceList = Helper.ConvertDataSetToDictionaryList(dataSet);
+
+            return new EmployeeLeavesResponse
+            {
+                Resp = new Response
                 {
-                    leaveList.Add(new Leaves
-                    {
-                        LeaveID = (int)row["LeaveID"],
-                        EmployeeID = (int)row["EmployeeID"],
-                        LeaveType = row["LeaveType"].ToString(),
-                        StartDate = (DateTime)row["StartDate"],
-                        EndDate = (DateTime)row["EndDate"],
-                        TotalDays = (int)row["TotalDays"],
-                        Reason = row["Reason"].ToString(),
-                        Status = row["Status"].ToString(),
-                        ApprovedBy = row["ApprovedBy"].ToString(),
-                        CreatedBy = row["CreatedBy"].ToString(),
-                        CreatedDate = (DateTime)row["CreatedDate"],
-                        ModifiedBy = row["ModifiedBy"] == DBNull.Value ? null : row["ModifiedBy"].ToString(),
-                        ModifiedDate = row["ModifiedDate"] == DBNull.Value ? null : (DateTime?)row["ModifiedDate"]
-                    });
-                }
-            }
+                    Code = outputParams["@Code"]?.ToString(),
+                    Message = outputParams["@Message"]?.ToString(),
+                    Description = outputParams["@Description"]?.ToString(),
+                    TotalRecords = outputParams["@TotalRecords"]?.ToString()
+                },
+                LeavesData = attendanceList
 
-            return leaveList;
+            };
         }
-
 
 
 
