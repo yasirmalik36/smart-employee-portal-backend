@@ -80,29 +80,25 @@ git clone https://github.com/yasirmalik36/smart-employee-portal-backend.git
 cd smart-employee-portal-backend/SmartEmpAPI
 ```
 
-### 2. Configure Database
+### 2. Configure settings
 
-Update `appsettings.json` with your SQL Server connection string:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=YOUR_SERVER;Database=SmartEmployeePortal;Trusted_Connection=True;TrustServerCertificate=True"
-  },
-  "JwtSettings": {
-    "SecretKey": "your-256-bit-secret-key-here",
-    "Issuer": "SmartEmployeePortal",
-    "Audience": "SmartEmployeePortalUsers",
-    "ExpiryMinutes": 60
-  }
-}
-```
-
-### 3. Run Database Migrations
+`appsettings.json` contains **no secrets**. Point the connection string at your SQL Server, then store the JWT signing key with .NET user secrets (or an environment variable in production):
 
 ```bash
-dotnet ef database update
+# from SmartEmpAPI/
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=SMART_EMP;Trusted_Connection=True;TrustServerCertificate=True;"
+dotnet user-secrets set "JwtSettings:SecretKey" "$(openssl rand -hex 32)"
 ```
+
+| Setting | Env var equivalent | Notes |
+|---|---|---|
+| `ConnectionStrings:DefaultConnection` | `ConnectionStrings__DefaultConnection` | SQL Server database |
+| `JwtSettings:SecretKey` | `JwtSettings__SecretKey` | **Required**, 32+ characters — the API refuses to start without it |
+| `FaceRecognition:ApiUrl` | `FaceRecognition__ApiUrl` | URL of the [face-recognition service](https://github.com/yasirmalik36/smart-employee-portal-face-recognition) |
+
+### 3. Database
+
+Data access uses ADO.NET with SQL Server **stored procedures** (see `DAL/DatabaseHelper.cs`). The database schema and procedures are not included in this repository yet, so you'll need an existing `SMART_EMP` database to run end-to-end.
 
 ### 4. Run the API
 
