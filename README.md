@@ -10,6 +10,12 @@
 
 ---
 
+## 📸 Screenshot
+
+The Swagger UI, captured from the running API by the [Refresh screenshots](.github/workflows/screenshots.yml) workflow:
+
+![Smart Employee Portal API Swagger UI](docs/screenshots/swagger.png)
+
 ## ✨ Features
 
 - 🔐 **JWT authentication** — login returns a signed token plus the user's role / permission profiles; all other controllers require `[Authorize]`
