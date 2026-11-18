@@ -1,0 +1,57 @@
+name: Refresh screenshots
+
+# Builds and runs the app, then captures README screenshots with Playwright.
+# Runs when this file changes, or manually from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/screenshots.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Start the app
+        env:
+          ASPNETCORE_ENVIRONMENT: Development
+          JwtSettings__SecretKey: screenshot-only-key-not-used-anywhere-0123456789abcdef
+        run: |
+          dotnet run --project SmartEmpAPI --urls http://localhost:5099 > app.log 2>&1 &
+          for i in $(seq 1 90); do curl -sf http://localhost:5099/swagger/index.html > /dev/null && exit 0; sleep 3; done
+          cat app.log; exit 1
+      - name: Capture screenshots
+        run: |
+          pip install -q playwright==1.49.1
+          python -m playwright install --with-deps chromium > /dev/null
+          mkdir -p docs/screenshots
+          python - <<'PY'
+          import asyncio
+          from playwright.async_api import async_playwright
+          PAGES = [("/swagger/index.html", "swagger")]
+          async def main():
+              async with async_playwright() as p:
+                  b = await p.chromium.launch()
+                  pg = await b.new_page(viewport={"width": 1440, "height": 900})
+                  for path, name in PAGES:
+                      await pg.goto("http://localhost:5099" + path, wait_until="networkidle")
+                      await pg.wait_for_timeout(2500)
+                      await pg.screenshot(path=f"docs/screenshots/{name}.png")
+                  await b.close()
+          asyncio.run(main())
+          PY
+      - name: Commit screenshots
+        run: |
+          git config user.name "Yasir Mehmood"
+          git config user.email "68496978+yasirmalik36@users.noreply.github.com"
+          git add docs/screenshots
+          git diff --cached --quiet && exit 0
+          git commit -m "Refresh README screenshots [skip ci]"
+          git push
