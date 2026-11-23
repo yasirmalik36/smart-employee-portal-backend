@@ -27,7 +27,7 @@ jobs:
           dotnet run --project SmartEmpAPI --urls http://localhost:5099 > app.log 2>&1 &
           for i in $(seq 1 90); do curl -sf http://localhost:5099/swagger/index.html > /dev/null && exit 0; sleep 3; done
           cat app.log; exit 1
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Capture screenshots
